@@ -33,6 +33,11 @@ export class AppComponent implements AfterViewInit {
     this.context.fillText("@realappie", x, y);
   }
 
+  private drawImage() {
+    const image = new Image();
+    image.src = '';
+  }
+
   open() {
     window.open('https://github.com/realappie', '_blank')
   }
