@@ -38,13 +38,10 @@ export class AppComponent implements AfterViewInit {
   private drawImage() {
     let that = this;
     const image = new Image();
-    image.src = './dbuilding.png';
+    image.src =
+      'https://cdn.jsdelivr.net/gh/Jdrew001/canvas-example-4y5ozn@master/app/image002.png';
     image.onload = function() {
       that.context.drawImage(image, 0, 0);
     };
-  }
-
-  open() {
-    window.open('https://github.com/realappie', '_blank');
   }
 }
