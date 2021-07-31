@@ -1,3 +1,4 @@
+import { Observable } from "rxjs";
 import { Point } from "./Point";
 
 export class Shape {
@@ -8,7 +9,9 @@ export class Shape {
   get points(): Array<Point> { return this._points; }
   get color(): "blue" | "white" | "yellow" { return this._color; }
 
-  constructor() {}
+  constructor() {
+    
+  }
 
   addPoints(x, y) {
     this._points.push(new Point(x, y));

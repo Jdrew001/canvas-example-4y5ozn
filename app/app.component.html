@@ -1,6 +1,8 @@
 <div class="content">
-  <canvas (mousedown)="mousedown($event)" (mouseup)="mouseup($event)" (mousemove)="mousemove($event)"
+  <canvas (mousedown)="mousedown($event)" (touchstart)="mousedown($event)" (touchend)="mouseup($event)"  (mouseup)="mouseup($event)" (touchmove)="mousemove($event)" (mousemove)="mousemove($event)"
     #canvasEl></canvas>
 </div>
 
 <button (click)="clearCanvas()">Clear</button>
+<br>
+<p>{{zoomLevel}}%</p>
