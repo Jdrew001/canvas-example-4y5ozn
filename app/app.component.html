@@ -1,2 +1,6 @@
-<canvas (mousedown)="mousedown($event)" (mouseup)="mouseup($event)" (mousemove)="mousemove($event)" #canvasEl width=400
-  height=400></canvas>
+<div class="content">
+  <canvas (mousedown)="mousedown($event)" (mouseup)="mouseup($event)" (mousemove)="mousemove($event)"
+    #canvasEl></canvas>
+</div>
+
+<button (click)="clearCanvas()">Clear</button>

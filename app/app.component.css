@@ -3,11 +3,24 @@ p {
 }
 
 canvas {
-  border: 2px solid rgba(0,0,0,0.12);
+  border: 2px solid rgba(0, 0, 0, 0.12);
+  color: red;
+  opacity: 0.5;
+  z-index: 9999;
   transition: 300ms;
   border-radius: 4px;
 }
 
 canvas:hover {
-  border: 2px solid rgba(0,0,0,0.54);
+  border: 2px solid rgba(0, 0, 0, 0.54);
+}
+
+div.content {
+  z-index: 98;
+  background-image: url('https://fwtx.com/downloads/7050/download/Yellow%20Building%20from%20Above.jpg.jpe?cb=16ba676f84fa45a37228db7e65f7257b&w=620&h=');
+  width: 80%;
+  height: 400px;
+}
+
+div.content canvas {
 }

@@ -16,12 +16,15 @@ export class AppComponent implements OnInit, AfterViewInit {
   /** Template reference to the canvas element */
   @ViewChild('canvasEl') canvasEl: ElementRef;
 
+  canvasWidth = 400;
+  canvasHeight = 400;
   startX = 0;
   startY = 0;
   mouseX = 0;
   mouseY = 0;
   bounds: DOMRect = null;
   existingLines = [];
+  shapes = [];
 
   /** Canvas 2d context */
   private context: CanvasRenderingContext2D;
@@ -37,10 +40,16 @@ export class AppComponent implements OnInit, AfterViewInit {
   ngOnInit() {}
 
   ngAfterViewInit() {
+    this.initCanvas();
+  }
+
+  initCanvas() {
     this.context = this.canvasElement.getContext('2d');
     this.bounds = this.canvasElement.getBoundingClientRect();
-    //this.draw();
-    this.drawImage();
+    this.canvasElement.style.width = '100%';
+    this.canvasElement.style.height = '100%';
+    this.canvasElement.width = this.canvasElement.offsetWidth;
+    this.canvasElement.height = this.canvasElement.offsetHeight;
   }
 
   mouseup(e) {
@@ -52,8 +61,9 @@ export class AppComponent implements OnInit, AfterViewInit {
           endX: this.mouseX,
           endY: this.mouseY
         });
-
         this.isMouseActivated = false;
+        console.log('existingLines', this.existingLines);
+        this.resetCanvas();
       }
 
       this.draw();
@@ -63,8 +73,13 @@ export class AppComponent implements OnInit, AfterViewInit {
   mousedown(e) {
     if (e['button'] === 0) {
       if (!this.isMouseActivated) {
-        this.startX = e['clientX'] - this.bounds.left;
-        this.startY = e['clientY'] - this.bounds.top;
+        if (this.existingLines.length > 0) {
+          this.startX = this.existingLines[this.existingLines.length - 1].endX;
+          this.startY = this.existingLines[this.existingLines.length - 1].endY;
+        } else {
+          this.startX = e['clientX'] - this.bounds.left;
+          this.startY = e['clientY'] - this.bounds.top;
+        }
         this.isMouseActivated = true;
       }
 
@@ -73,8 +88,23 @@ export class AppComponent implements OnInit, AfterViewInit {
   }
 
   mousemove(e) {
-    this.mouseX = e.clientX - this.bounds.left;
-    this.mouseY = e.clientY - this.bounds.top;
+    if (this.existingLines.length > 0) {
+      this.startX = this.existingLines[this.existingLines.length - 1].endX;
+      this.startY = this.existingLines[this.existingLines.length - 1].endY;
+
+      const xDiff = Math.hypot(this.mouseX - this.existingLines[0].startX);
+      const yDiff = Math.hypot(this.mouseY - this.existingLines[0].startY);
+      if (xDiff <= 20 && yDiff <= 20) {
+        this.mouseX = this.existingLines[0].startX;
+        this.mouseY = this.existingLines[0].startY;
+      } else {
+        this.mouseX = e.clientX - this.bounds.left;
+        this.mouseY = e.clientY - this.bounds.top;
+      }
+    } else {
+      this.mouseX = e.clientX - this.bounds.left;
+      this.mouseY = e.clientY - this.bounds.top;
+    }
 
     if (this.isMouseActivated) {
       this.draw();
@@ -82,23 +112,15 @@ export class AppComponent implements OnInit, AfterViewInit {
   }
 
   private draw() {
-    this.context.fillStyle = '#333333';
-    this.context.fillRect(0, 0, canvasWidth, canvasHeight);
-    this.context.strokeStyle = 'black';
+    //this.context.fillStyle = 'transparent';
     this.context.lineWidth = 2;
-    this.context.beginPath();
 
-    for (var i = 0; i < this.existingLines.length; ++i) {
-      var line = this.existingLines[i];
-      this.context.moveTo(line.startX, line.startY);
-      this.context.lineTo(line.endX, line.endY);
-    }
-
-    this.context.stroke();
+    this.drawHistoryItems();
 
     if (this.isMouseActivated) {
-      this.context.strokeStyle = 'darkred';
-      this.context.lineWidth = 3;
+      this.resetCanvas();
+      this.context.strokeStyle = 'red';
+      this.context.lineWidth = 4;
       this.context.beginPath();
       this.context.moveTo(this.startX, this.startY);
       this.context.lineTo(this.mouseX, this.mouseY);
@@ -106,13 +128,36 @@ export class AppComponent implements OnInit, AfterViewInit {
     }
   }
 
-  private drawImage() {
-    let that = this;
-    const image = new Image();
-    image.src =
-      'https://fwtx.com/downloads/7050/download/Yellow%20Building%20from%20Above.jpg.jpe?cb=16ba676f84fa45a37228db7e65f7257b&w=620&h=';
-    image.onload = function() {
-      that.context.drawImage(image, 0, 0);
-    };
+  private drawHistoryItems() {
+    this.context.beginPath();
+    this.context.strokeStyle = 'white';
+    for (var i = 0; i < this.existingLines.length; ++i) {
+      var line = this.existingLines[i];
+      this.context.moveTo(line.startX, line.startY);
+      this.context.lineTo(line.endX, line.endY);
+    }
+
+    this.context.stroke();
+  }
+
+  clearCanvas() {
+    this.context.clearRect(
+      0,
+      0,
+      this.canvasElement.width,
+      this.canvasElement.height
+    );
+    this.existingLines = [];
+  }
+
+  private resetCanvas() {
+    this.context.clearRect(
+      0,
+      0,
+      this.canvasElement.width,
+      this.canvasElement.height
+    );
+    // this.drawImage();
+    this.drawHistoryItems();
   }
 }
