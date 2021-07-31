@@ -6,6 +6,7 @@ import {
   OnInit
 } from '@angular/core';
 import { Observable } from 'rxjs';
+import { Shape } from './Shape';
 
 @Component({
   selector: 'my-app',
@@ -23,8 +24,8 @@ export class AppComponent implements OnInit, AfterViewInit {
   mouseX = 0;
   mouseY = 0;
   bounds: DOMRect = null;
-  existingLines = [];
-  shapes = [];
+  existingLines: Array<{startX: number, startY: number, endX: number, endY: number}> = [];
+  shapes: Array<Shape> = [];
 
   /** Canvas 2d context */
   private context: CanvasRenderingContext2D;
@@ -55,6 +56,7 @@ export class AppComponent implements OnInit, AfterViewInit {
   mouseup(e) {
     if (e['button'] === 0) {
       if (this.isMouseActivated) {
+
         this.existingLines.push({
           startX: this.startX,
           startY: this.startY,
@@ -64,6 +66,15 @@ export class AppComponent implements OnInit, AfterViewInit {
         this.isMouseActivated = false;
         console.log('existingLines', this.existingLines);
         this.resetCanvas();
+
+        if (this.existingLines.length > 0) {
+          // if the last line is touching the start position of the first line, then we need to create a shape
+          // and fill it in and add that to shape array and clear the existing
+          if (this.existingLines[0].startX == this.existingLines[this.existingLines.length - 1].endX &&
+            this.existingLines[0].startY == this.existingLines[this.existingLines.length - 1].endY) {
+              this.drawShape();
+            }
+        }
       }
 
       this.draw();
@@ -88,18 +99,19 @@ export class AppComponent implements OnInit, AfterViewInit {
   }
 
   mousemove(e) {
+    let mousePos = { x: e.clientX - this.bounds.left, y: e.clientY - this.bounds.top };
     if (this.existingLines.length > 0) {
       this.startX = this.existingLines[this.existingLines.length - 1].endX;
       this.startY = this.existingLines[this.existingLines.length - 1].endY;
 
-      const xDiff = Math.hypot(this.mouseX - this.existingLines[0].startX);
-      const yDiff = Math.hypot(this.mouseY - this.existingLines[0].startY);
+      const xDiff = Math.hypot(mousePos.x - this.existingLines[0].startX);
+      const yDiff = Math.hypot(mousePos.y - this.existingLines[0].startY);
       if (xDiff <= 20 && yDiff <= 20) {
         this.mouseX = this.existingLines[0].startX;
         this.mouseY = this.existingLines[0].startY;
       } else {
-        this.mouseX = e.clientX - this.bounds.left;
-        this.mouseY = e.clientY - this.bounds.top;
+        this.mouseX = mousePos.x;
+        this.mouseY = mousePos.y;
       }
     } else {
       this.mouseX = e.clientX - this.bounds.left;
@@ -111,20 +123,63 @@ export class AppComponent implements OnInit, AfterViewInit {
     }
   }
 
+  private drawShape() {
+    let shape = new Shape();
+    shape.setColor("blue");
+    this.context.fillStyle = shape.color;
+    this.context.beginPath();
+    this.context.moveTo(this.existingLines[0].startX, this.existingLines[0].startY);
+    shape.addPoints(this.existingLines[0].startX, this.existingLines[0].startY);
+    for (let i = 0; i < this.existingLines.length; i++) {
+      this.context.lineTo(this.existingLines[i].endX, this.existingLines[i].endY);
+      if (i !== this.existingLines.length + 1) {
+        shape.addPoints(this.existingLines[i].endX, this.existingLines[i].endY);
+      }
+      
+    }
+    this.context.closePath();
+    this.context.fill();
+    this.shapes.push(shape);
+    this.existingLines = [];
+  }
+
   private draw() {
     //this.context.fillStyle = 'transparent';
     this.context.lineWidth = 2;
 
+    this.drawHistoryShapes();
     this.drawHistoryItems();
 
     if (this.isMouseActivated) {
       this.resetCanvas();
       this.context.strokeStyle = 'red';
-      this.context.lineWidth = 4;
+      this.context.lineWidth = 2;
+      this.context.lineJoin = 'round';
       this.context.beginPath();
       this.context.moveTo(this.startX, this.startY);
       this.context.lineTo(this.mouseX, this.mouseY);
       this.context.stroke();
+    }
+  }
+
+  private drawHistoryShapes() {
+    if (this.shapes.length > 0) {
+      this.shapes.forEach(shape => {
+        this.context.fillStyle = shape.color;
+        this.context.beginPath();
+        let points = shape.points;
+        for (let i = 0; i < points.length; i++) {
+          if (i == 0) {
+            this.context.moveTo(points[i].x, points[i].y);
+          }
+
+          if (i !== 0 && i !== points.length - 1) {
+            this.context.lineTo(points[i].x, points[i].y);
+          }
+        }// end of points
+        this.context.closePath();
+        this.context.fill();
+      })
     }
   }
 
@@ -148,6 +203,7 @@ export class AppComponent implements OnInit, AfterViewInit {
       this.canvasElement.height
     );
     this.existingLines = [];
+    this.shapes = [];
   }
 
   private resetCanvas() {
@@ -159,5 +215,6 @@ export class AppComponent implements OnInit, AfterViewInit {
     );
     // this.drawImage();
     this.drawHistoryItems();
+    this.drawHistoryShapes();
   }
 }
