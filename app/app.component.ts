@@ -39,7 +39,7 @@ export class AppComponent implements AfterViewInit {
     let that = this;
     const image = new Image();
     image.src =
-      'https://stackblitz.com/files/canvas-example-4y5ozn/github/Jdrew001/canvas-example-4y5ozn/master/app/building.png';
+      'https://fwtx.com/downloads/7050/download/Yellow%20Building%20from%20Above.jpg.jpe?cb=16ba676f84fa45a37228db7e65f7257b&w=620&h=';
     image.onload = function() {
       that.context.drawImage(image, 0, 0);
     };
