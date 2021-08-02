@@ -21,7 +21,7 @@ export class AppComponent implements OnInit, AfterViewInit {
   canvasHeight = 400;
   startX = 0;
   startY = 0;
-  mouseX = 0;
+  mouseX = 0;//
   mouseY = 0;
   bounds: DOMRect = null;
   existingLines: Array<{startX: number, startY: number, endX: number, endY: number}> = [];
@@ -54,7 +54,8 @@ export class AppComponent implements OnInit, AfterViewInit {
   }
 
   mouseup(e) {
-    if (e['button'] === 0) {
+    e.preventDefault();
+    if ((e['button'] === 0 && this.isMouseClick(e)) || this.isTouch(e)) { // if the mouse button is clicked
       if (this.isMouseActivated) {
 
         this.existingLines.push({
@@ -64,7 +65,6 @@ export class AppComponent implements OnInit, AfterViewInit {
           endY: this.mouseY
         });
         this.isMouseActivated = false;
-        console.log('existingLines', this.existingLines);
         this.resetCanvas();
 
         if (this.existingLines.length > 0) {
@@ -82,14 +82,16 @@ export class AppComponent implements OnInit, AfterViewInit {
   }
 
   mousedown(e) {
-    if (e['button'] === 0) {
+    e.preventDefault();
+    if ((e['button'] === 0 && this.isMouseClick(e)) || this.isTouch(e)) {
+      console.log(e['clientX'], e);
       if (!this.isMouseActivated) {
         if (this.existingLines.length > 0) {
           this.startX = this.existingLines[this.existingLines.length - 1].endX;
           this.startY = this.existingLines[this.existingLines.length - 1].endY;
         } else {
-          this.startX = e['clientX'] - this.bounds.left;
-          this.startY = e['clientY'] - this.bounds.top;
+          this.startX = this.isTouch(e) ? e['touches'][0]['clientX'] - this.bounds.left : e['clientX'] - this.bounds.left;
+          this.startY = this.isTouch(e) ? e['touches'][0]['clientY'] - this.bounds.top : e['clientX'] - this.bounds.left;
         }
         this.isMouseActivated = true;
       }
@@ -99,7 +101,9 @@ export class AppComponent implements OnInit, AfterViewInit {
   }
 
   mousemove(e) {
-    let mousePos = { x: e.clientX - this.bounds.left, y: e.clientY - this.bounds.top };
+    e.preventDefault();
+    let mousePos = this.isTouch(e) ? { x: e['touches'][0].clientX - this.bounds.left, y: e['touches'][0].clientY - this.bounds.top }:
+      { x: e.clientX - this.bounds.left, y: e.clientY - this.bounds.top };
     if (this.existingLines.length > 0) {
       this.startX = this.existingLines[this.existingLines.length - 1].endX;
       this.startY = this.existingLines[this.existingLines.length - 1].endY;
@@ -114,8 +118,8 @@ export class AppComponent implements OnInit, AfterViewInit {
         this.mouseY = mousePos.y;
       }
     } else {
-      this.mouseX = e.clientX - this.bounds.left;
-      this.mouseY = e.clientY - this.bounds.top;
+      this.mouseX = this.isTouch(e) ? e['touches'][0].clientX - this.bounds.left: e.clientX - this.bounds.left;
+      this.mouseY = this.isTouch(e) ? e['touches'][0].clientY - this.bounds.top: e.clientY - this.bounds.top;
     }
 
     if (this.isMouseActivated) {
@@ -204,6 +208,14 @@ export class AppComponent implements OnInit, AfterViewInit {
     );
     this.existingLines = [];
     this.shapes = [];
+  }
+
+  private isTouch(e) {
+    return e['type'] === 'touchstart' || e['type'] === 'touchmove' || e['type'] === 'touchend';
+  }
+
+  private isMouseClick(e) {
+    return e['type'] === 'mouseup' || e['type'] === 'mousemove' || e['type'] === 'mousedown';
   }
 
   private resetCanvas() {
