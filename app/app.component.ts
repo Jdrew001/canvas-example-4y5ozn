@@ -14,7 +14,7 @@ import { Shape } from './Shape';
   styleUrls: ['./app.component.css']
 })
 export class AppComponent implements OnInit, AfterViewInit {
-  /** Template reference to the canvas element */
+
   @ViewChild('canvasEl') canvasEl: ElementRef;
 
   canvasWidth = 400;
@@ -27,10 +27,8 @@ export class AppComponent implements OnInit, AfterViewInit {
   existingLines: Array<{startX: number, startY: number, endX: number, endY: number}> = [];
   shapes: Array<Shape> = [];
 
-  /** Canvas 2d context */
   private context: CanvasRenderingContext2D;
-
-  private isMouseActivated = false;
+  private isInteractionActive = false;
 
   get canvasElement(): HTMLCanvasElement {
     return this.canvasEl.nativeElement as HTMLCanvasElement;
@@ -55,26 +53,17 @@ export class AppComponent implements OnInit, AfterViewInit {
 
   mouseup(e) {
     e.preventDefault();
-    if ((e['button'] === 0 && this.isMouseClick(e)) || this.isTouch(e)) { // if the mouse button is clicked
-      if (this.isMouseActivated) {
-
+    if ((e['button'] === 0 && this.isMouseClick(e)) || this.isTouch(e)) {
+      if (this.isInteractionActive) {
         this.existingLines.push({
           startX: this.startX,
           startY: this.startY,
           endX: this.mouseX,
           endY: this.mouseY
         });
-        this.isMouseActivated = false;
+        this.isInteractionActive = false;
         this.resetCanvas();
-
-        if (this.existingLines.length > 0) {
-          // if the last line is touching the start position of the first line, then we need to create a shape
-          // and fill it in and add that to shape array and clear the existing
-          if (this.existingLines[0].startX == this.existingLines[this.existingLines.length - 1].endX &&
-            this.existingLines[0].startY == this.existingLines[this.existingLines.length - 1].endY) {
-              this.drawShape();
-            }
-        }
+        this.drawFromIntersectionPoints();
       }
 
       this.draw();
@@ -84,8 +73,7 @@ export class AppComponent implements OnInit, AfterViewInit {
   mousedown(e) {
     e.preventDefault();
     if ((e['button'] === 0 && this.isMouseClick(e)) || this.isTouch(e)) {
-      console.log(e['clientX'], e);
-      if (!this.isMouseActivated) {
+      if (!this.isInteractionActive) {
         if (this.existingLines.length > 0) {
           this.startX = this.existingLines[this.existingLines.length - 1].endX;
           this.startY = this.existingLines[this.existingLines.length - 1].endY;
@@ -93,7 +81,7 @@ export class AppComponent implements OnInit, AfterViewInit {
           this.startX = this.isTouch(e) ? e['touches'][0]['clientX'] - this.bounds.left : e['clientX'] - this.bounds.left;
           this.startY = this.isTouch(e) ? e['touches'][0]['clientY'] - this.bounds.top : e['clientX'] - this.bounds.left;
         }
-        this.isMouseActivated = true;
+        this.isInteractionActive = true;
       }
 
       this.draw();
@@ -122,14 +110,25 @@ export class AppComponent implements OnInit, AfterViewInit {
       this.mouseY = this.isTouch(e) ? e['touches'][0].clientY - this.bounds.top: e.clientY - this.bounds.top;
     }
 
-    if (this.isMouseActivated) {
+    if (this.isInteractionActive) {
       this.draw();
     }
   }
 
+  clearCanvas() {
+    this.context.clearRect(
+      0,
+      0,
+      this.canvasElement.width,
+      this.canvasElement.height
+    );
+    this.existingLines = [];
+    this.shapes = [];
+  }
+
   private drawShape() {
     let shape = new Shape();
-    shape.setColor("blue");
+    shape.setColor("blue"); // input from lib
     this.context.fillStyle = shape.color;
     this.context.beginPath();
     this.context.moveTo(this.existingLines[0].startX, this.existingLines[0].startY);
@@ -154,9 +153,9 @@ export class AppComponent implements OnInit, AfterViewInit {
     this.drawHistoryShapes();
     this.drawHistoryItems();
 
-    if (this.isMouseActivated) {
+    if (this.isInteractionActive) {
       this.resetCanvas();
-      this.context.strokeStyle = 'red';
+      this.context.strokeStyle = 'red'; // input from lib
       this.context.lineWidth = 2;
       this.context.lineJoin = 'round';
       this.context.beginPath();
@@ -189,7 +188,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 
   private drawHistoryItems() {
     this.context.beginPath();
-    this.context.strokeStyle = 'white';
+    this.context.strokeStyle = 'white'; // input from lib
     for (var i = 0; i < this.existingLines.length; ++i) {
       var line = this.existingLines[i];
       this.context.moveTo(line.startX, line.startY);
@@ -197,17 +196,6 @@ export class AppComponent implements OnInit, AfterViewInit {
     }
 
     this.context.stroke();
-  }
-
-  clearCanvas() {
-    this.context.clearRect(
-      0,
-      0,
-      this.canvasElement.width,
-      this.canvasElement.height
-    );
-    this.existingLines = [];
-    this.shapes = [];
   }
 
   private isTouch(e) {
@@ -218,6 +206,15 @@ export class AppComponent implements OnInit, AfterViewInit {
     return e['type'] === 'mouseup' || e['type'] === 'mousemove' || e['type'] === 'mousedown';
   }
 
+  private drawFromIntersectionPoints() {
+    if (this.existingLines.length > 0) {
+      if (this.existingLines[0].startX == this.existingLines[this.existingLines.length - 1].endX &&
+        this.existingLines[0].startY == this.existingLines[this.existingLines.length - 1].endY) {
+          this.drawShape();
+        }
+    }
+  }
+
   private resetCanvas() {
     this.context.clearRect(
       0,
@@ -225,7 +222,6 @@ export class AppComponent implements OnInit, AfterViewInit {
       this.canvasElement.width,
       this.canvasElement.height
     );
-    // this.drawImage();
     this.drawHistoryItems();
     this.drawHistoryShapes();
   }
