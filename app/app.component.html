@@ -1,8 +1,14 @@
-<div class="content">
+<!-- <div class="content">
   <canvas (mousedown)="mousedown($event)" (touchstart)="mousedown($event)" (touchend)="mouseup($event)"  (mouseup)="mouseup($event)" (touchmove)="mousemove($event)" (mousemove)="mousemove($event)"
     #canvasEl></canvas>
 </div>
 
 <button (click)="clearCanvas()">Clear</button>
 <br>
-<p>{{zoomLevel}}%</p>
+<p>{{zoomLevel}}%</p> -->
+
+<ko-stage [config]="configStage">
+  <ko-layer>
+    <!-- <ko-circle [config]="configCircle" (click)="handleClick($event)"></ko-circle> -->
+  </ko-layer>
+</ko-stage>
